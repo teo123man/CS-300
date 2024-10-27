@@ -18,6 +18,12 @@ int PmtForN()
     return N;
 }
 
+bool attackControl(int row, int col, int N, bool colCheck[], bool diagFCheck[], bool diagSCheck[])
+{
+    //Controls if there are any threats to the queen + does row check
+    return col < N && colCheck[col] || diagFCheck[row + col] || diagSCheck[N - 1 + col - row];
+} 
+
 void removeQueen(State& currentState, int N, bool colCheck[], bool diagFCheck[], bool diagSCheck[], int positions[]) {
     colCheck[currentState.col] = false;
     diagFCheck[currentState.row + currentState.col] = false;
@@ -42,24 +48,28 @@ int main()
         positions[i] = -1;
     }
 
-    // To check column and the two diagonals is enough, don't need to check row
+    // To check column and the two diagonals is enough, don't need to check row.
+    // Instead of a n*n 2d matrix to check the board,
+    // I implemented 3 1d arrays to check the columns and the two diagonals.
+    // This reduces the space complexity from O(n^2) to O(n).
     bool* colCheck = new bool[N];
     bool* diagFCheck = new bool[2 * N - 1];
     bool* diagSCheck = new bool[2 * N - 1];
 
+    // Initialize the arrays
     for(int i = 0; i < N; i++) 
     {
         colCheck[i] = false;
     }
+
     for(int i = 0; i < 2 * N - 1; i++) 
     {
         diagFCheck[i] = false;
         diagSCheck[i] = false;
     }
     
-    
     Stack<State> stack; 
-
+    
     ofstream outFile;
     string fileName = to_string(N) + "queens_solutions.txt";
     outFile.open(fileName);
@@ -70,70 +80,78 @@ int main()
     State currentState;
     currentState.row = 0;
     currentState.col = -1; // Will be 0 right after being incremented
-    // currentState.col = 0; // this doesn't work
+    // currentState.col = 0; 
 
-    while(true) 
+    bool done = false; 
+    while (!done)
     {
-        currentState.col += 1; // needed bc of the -1
+        currentState.col += 1; // needed because of the -1
 
-        while(currentState.col < N && (colCheck[currentState.col] || diagFCheck[currentState.row + currentState.col] || diagSCheck[N - 1 + currentState.col - currentState.row])) 
+        while (attackControl(currentState.row, currentState.col, N, colCheck, diagFCheck, diagSCheck))
         {
             currentState.col += 1;
         }
 
-        if(currentState.col < N) 
+        if (currentState.col < N)
         {
-            // we should save where the queen is
+            //placing queen
             positions[currentState.row] = currentState.col;
             colCheck[currentState.col] = true;
             diagFCheck[currentState.row + currentState.col] = true;
             diagSCheck[N - 1 + currentState.col - currentState.row] = true;
 
-            if(currentState.row == N - 1) // checking if we are at the last row
+            if (currentState.row == N - 1) 
             {
                 solutionCount++;
                 outFile << "Solution " << solutionCount << ": [";
-                for(int i = 0; i < N; i++) 
+                for (int i = 0; i < N; i++)
                 {
                     outFile << positions[i];
-                    if(i != N -1) outFile << ", ";
+                    if (i != N - 1) outFile << ", ";
                 }
                 outFile << "]" << endl;
+
+                //Backtracking
                 removeQueen(currentState, N, colCheck, diagFCheck, diagSCheck, positions);
-                while(currentState.col >= N - 1) // Backtracking part
+                while (currentState.col >= N - 1)
                 {
-                    if(stack.isEmpty()) 
+                    if (stack.isEmpty())
                     {
-                        goto end;  
+                        done = true;
+                        break;
                     }
                     currentState = stack.top();
                     stack.pop();
                     removeQueen(currentState, N, colCheck, diagFCheck, diagSCheck, positions);
                 }
-            } else {
-                // Put current state in the stack
+                if (done)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                //Push current state and move to next row
                 stack.push(currentState);
-
-                // Move to next row
                 currentState.row += 1;
                 currentState.col = -1;
             }
-        } else {
-            // Backtrack
-            if(stack.isEmpty()) 
+        }
+        else
+        {
+            if (stack.isEmpty())
             {
-                break; // All solutions found
+                break; 
             }
             currentState = stack.top();
-            stack.pop();
-
+            stack.pop(); //backtracking
             removeQueen(currentState, N, colCheck, diagFCheck, diagSCheck, positions);
         }
     }
-end:
+
     outFile.close();
 
-    // Opening the file again to put the total solutions at the top
+    //Opening the file again to put the total solutions at the top
     ifstream inFile(fileName);
     string fileContent;
     string line;
@@ -143,7 +161,7 @@ end:
     }
     inFile.close();
 
-    // Write total solutions and the rest
+    // Write total solutions - stream
     outFile.open(fileName);
     outFile << "Total solutions for N=" << N << ": " << solutionCount << endl;
     outFile << fileContent;
@@ -151,7 +169,7 @@ end:
 
     cout << "Solutions have been saved to '" << fileName << "'" << endl;
 
-    // Cleaning up
+    // Deleting leftover memory
     delete[] positions;
     delete[] colCheck;
     delete[] diagFCheck;
