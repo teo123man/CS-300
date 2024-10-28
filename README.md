@@ -55,19 +55,3 @@ To compile and execute the program, use the following commands:
 g++ main.cpp stack.cpp -o n_queens_solver
 ./n_queens_solver
 ```
-
-## Submission Guidelines
-
-- Submit exactly 3 files: `main.cpp`, `stack.h`, and `stack.cpp`.
-- Ensure that the filenames match precisely; otherwise, the submission may not be graded.
-- Upload directly to SUCourse without zipping.
-
-## Notes
-
-- The program should compile and run correctly; otherwise, it may receive a grade of 0.
-- For grading, factors like code readability, proper indentation, and informative variable names are considered.
-- Efficient implementation and adherence to output format are essential for full credit.
-
----
-
-**Good luck with the N-Queens problem!**
